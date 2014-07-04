@@ -25,6 +25,18 @@ public class Order {
 
     private String timeZoneId;
 
+    public Order(int recVersion, long orderId, int easyOrderNum, String created, String storeId, BigDecimal totalValue, List<LineItem> lineItems, String status, String timeZoneId) {
+        this.recVersion = recVersion;
+        this.orderId = orderId;
+        this.easyOrderNum = easyOrderNum;
+        this.created = created;
+        this.storeId = storeId;
+        this.totalValue = totalValue;
+        this.lineItems = lineItems;
+        this.status = status;
+        this.timeZoneId = timeZoneId;
+    }
+
     public int getRecVersion() {
         return recVersion;
     }

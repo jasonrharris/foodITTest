@@ -3,7 +3,7 @@ package com.foodit.test.sample.entities;
 import java.util.List;
 
 /**
- * Created by jasonrharris on 04/07/2014.
+ * Details re. options available for a meal and how the can be selected
  */
 public class MainMenuItemOptions {
     private String name;

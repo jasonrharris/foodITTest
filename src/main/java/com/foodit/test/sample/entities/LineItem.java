@@ -15,6 +15,13 @@ public class LineItem {
 
     private int quantity;
 
+    public LineItem(int id, BigDecimal total, BigDecimal unitPrice, int quantity) {
+        this.id = id;
+        this.total = total;
+        this.unitPrice = unitPrice;
+        this.quantity = quantity;
+    }
+
     public int getId() {
         return id;
     }
