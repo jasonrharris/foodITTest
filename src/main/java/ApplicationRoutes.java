@@ -1,4 +1,5 @@
 import com.foodit.test.sample.controller.DataLoadController;
+import com.foodit.test.sample.controller.OrderReportController;
 import com.threewks.thundr.action.method.MethodAction;
 import com.threewks.thundr.route.Route;
 import com.threewks.thundr.route.Routes;
@@ -6,29 +7,43 @@ import com.threewks.thundr.route.Routes;
 import static com.threewks.thundr.route.RouteType.GET;
 
 public class ApplicationRoutes {
-	public static class Names {
-		public static final String ListTasks = "list";
-		public static final String CreateTask = "create-task";
-		public static final String ViewTask = "view-task";
-		public static final String UpdateTask = "update-task";
-		public static final String StartTask = "start-task";
-		public static final String StopTask = "stop-task";
-		public static final String FinishedTask = "finished-task";
-		public static final String ArchiveTask = "archive-task";
+	public enum RouteName {
+		LIST("list"),
+        CREATE("create-task"),
+        VIEW_TASK("view-task"),
+        UPDATE("update-task"),
+        START("start-task"),
+        STOP("stop-task"),
+        FINISHED("finished-task"),
+        ARCHIVE("archive-task"),
+        LOAD_DATA("load-data"),
+        VIEW_INSTRUCTIONS("view-instructions"),
+        VIEW_DATA("view-data"),
+        ORDER_COUNT("order-count");
 
-		public static final String LoadData = "load-data";
+        private String name;
 
-		public static final String ViewInstructions = "view-instructions";
-		public static final String ViewData = "view-data";
-	}
+        RouteName(String name) {
+
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
 
 	public void addRoutes(Routes routes) {
 
 		// Loader
-		routes.addRoute(new Route(GET, "/load/", Names.LoadData), new MethodAction(DataLoadController.class, "load"));
+		routes.addRoute(new Route(GET, "/load/", RouteName.LOAD_DATA.getName()), new MethodAction(DataLoadController.class, "load"));
 
 		// Instructions
-		routes.addRoute(new Route(GET, "/", Names.ViewInstructions), new MethodAction(DataLoadController.class, "instructions"));
-		routes.addRoute(new Route(GET, "/restaurant/{restaurant}/download", Names.ViewData), new MethodAction(DataLoadController.class, "viewData"));
+		routes.addRoute(new Route(GET, "/", RouteName.VIEW_INSTRUCTIONS.getName()), new MethodAction(DataLoadController.class, "instructions"));
+
+		routes.addRoute(new Route(GET, "/restaurant/{restaurant}/download", RouteName.VIEW_DATA.getName()), new MethodAction(DataLoadController.class, "viewData"));
+
+        //Data Enquiries
+        routes.addRoute(new Route(GET, "/restaurant/{restaurant}/orders/count", RouteName.ORDER_COUNT.getName()), new MethodAction(OrderReportController.class, "orderCountReport"));
 	}
 }

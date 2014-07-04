@@ -1,8 +1,9 @@
 package com.foodit.test.sample.controller;
 
+import com.foodit.test.sample.entities.RestaurantData;
+import com.foodit.test.sample.service.RestaurantDataServiceImpl;
 import com.google.appengine.labs.repackaged.com.google.common.collect.Lists;
 import com.google.common.io.Resources;
-import com.googlecode.objectify.Key;
 import com.threewks.thundr.http.ContentType;
 import com.threewks.thundr.http.HttpSupport;
 import com.threewks.thundr.logger.Logger;
@@ -19,8 +20,13 @@ import java.util.List;
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
 public class DataLoadController {
+    private final RestaurantDataServiceImpl restaurantDataService;
 
-	public JspView instructions() {
+    public DataLoadController(RestaurantDataServiceImpl restaurantDataService) {
+        this.restaurantDataService = restaurantDataService;
+    }
+
+    public JspView instructions() {
 		return new JspView("instructions.jsp");
 	}
 
@@ -38,8 +44,7 @@ public class DataLoadController {
 	private RestaurantData loadData(String restaurantName) {
 		String orders = readFile(String.format("orders-%s.json", restaurantName));
 		String menu = readFile(String.format("menu-%s.json", restaurantName));
-		RestaurantData restaurantLoadData = new RestaurantData(restaurantName, menu, orders);
-		return restaurantLoadData;
+        return new RestaurantData(restaurantName, menu, orders);
 	}
 
 	private String readFile(String resourceName) {
@@ -53,10 +58,10 @@ public class DataLoadController {
 	}
 
 	public void viewData(String restaurant, HttpServletResponse response) throws IOException {
-		response.addHeader(HttpSupport.Header.ContentType, ContentType.ApplicationJson.value());
-		RestaurantData restaurantLoadData = ofy().load().key(Key.create(RestaurantData.class, restaurant)).now();
-		String data = restaurantLoadData.viewData();
-		response.getWriter().write(data);
+        String data =restaurantDataService.getRestaurantDataByName(restaurant).viewData();
+
+        response.addHeader(HttpSupport.Header.ContentType, ContentType.ApplicationJson.value());
+        response.getWriter().write(data);
 		response.setContentLength(data.getBytes().length);
 	}
 

@@ -35,7 +35,7 @@
  </p>
     <h3>Menu/Orders</h3>
      <p>
-         A menu contains meals which which have ids that link to the id of a line items on a order.
+         A menu contains meals which which have ids that link to the id of a line item on a order.
          </br>
 
          For example the following meal on the bbqgrill menu has a id 5:

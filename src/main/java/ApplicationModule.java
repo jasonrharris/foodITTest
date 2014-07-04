@@ -1,4 +1,6 @@
-import com.foodit.test.sample.controller.RestaurantData;
+import com.foodit.test.sample.entities.RestaurantData;
+import com.foodit.test.sample.service.RestaurantDataService;
+import com.foodit.test.sample.service.RestaurantDataServiceImpl;
 import com.googlecode.objectify.ObjectifyService;
 import com.threewks.thundr.gae.GaeModule;
 import com.threewks.thundr.gae.objectify.ObjectifyModule;
@@ -21,6 +23,7 @@ public class ApplicationModule extends BaseModule {
 	public void configure(UpdatableInjectionContext injectionContext) {
 		super.configure(injectionContext);
 		configureObjectify();
+        injectionContext.inject(RestaurantDataServiceImpl.class).as(RestaurantDataService.class);
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package com.foodit.test.sample.controller;
+package com.foodit.test.sample.entities;
 
 import com.google.appengine.api.datastore.Text;
 import com.googlecode.objectify.annotation.Entity;
@@ -21,6 +21,7 @@ public class RestaurantData {
 	}
 
 	public RestaurantData() {
+        this("", "", "");
 	}
 
 	public String getRestaurant() {
@@ -48,6 +49,7 @@ public class RestaurantData {
 	}
 
 	public String viewData() {
+
 		return menuJson.getValue().concat(ordersJson.getValue());
 	}
 }
