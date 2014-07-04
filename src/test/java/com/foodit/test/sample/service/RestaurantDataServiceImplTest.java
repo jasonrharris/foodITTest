@@ -1,5 +1,6 @@
 package com.foodit.test.sample.service;
 
+import com.foodit.test.sample.entities.Order;
 import com.foodit.test.sample.entities.RestaurantData;
 import com.google.gson.Gson;
 import com.threewks.thundr.gae.SetupAppengine;
@@ -7,6 +8,8 @@ import com.threewks.thundr.gae.objectify.SetupObjectify;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+
+import java.util.List;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
@@ -59,6 +62,17 @@ public class RestaurantDataServiceImplTest {
         RestaurantData retrievedRestaurantData = service.getRestaurantDataByName(BBQGRILL);
 
         assertThat(retrievedRestaurantData, equalTo(restaurantData));
+    }
+
+    @Test
+    public void shouldRetrieveOrdersPerRestaurant(){
+        List<Order> orders = service.getOrders(BBQGRILL);
+
+        assertThat(orders.size(), equalTo(3));
+
+        for (Order order : orders){
+            assertThat(order.getStoreId(),equalTo(BBQGRILL));
+        }
     }
 
 
