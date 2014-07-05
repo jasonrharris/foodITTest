@@ -37,6 +37,9 @@ public class Order {
         this.timeZoneId = timeZoneId;
     }
 
+    public Order() {
+    }
+
     public int getRecVersion() {
         return recVersion;
     }

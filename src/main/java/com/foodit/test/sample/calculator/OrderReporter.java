@@ -1,14 +1,15 @@
 package com.foodit.test.sample.calculator;
 
-import com.foodit.test.sample.entities.LineItem;
-import com.foodit.test.sample.entities.Order;
-import com.foodit.test.sample.entities.RestaurantItemKey;
+import com.foodit.test.sample.entities.*;
 import com.foodit.test.sample.service.RestaurantDataService;
+import com.googlecode.objectify.Key;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.googlecode.objectify.ObjectifyService.ofy;
 
 /**
  * Will calculate sales
@@ -21,53 +22,181 @@ public class OrderReporter {
     }
 
     public BigDecimal getTotalSalesAmount(String restaurantName) {
-        List<Order> orders = getOrders(restaurantName);
-        BigDecimal sales = BigDecimal.ZERO;
-        for (Order order : orders) {
-            sales = addToCumulativeTotal(sales, order);
+        RestaurantOrderReport report = getStoredRestaurantOrderReport(restaurantName);
+
+        if (report.getTotalSales() != null){
+            return report.getTotalSales();
         }
-        return sales;
+
+        return calculateAndSaveTotalSalesAmount(restaurantName, report);
+    }
+
+    public Map<String, Integer> getMostFrequentlyOrderedItemPerRestaurant() {
+        List<String> allRestaurantNames = restaurantDataService.getAllRestaurantNames();
+
+        Map<String, Integer> restaurantToMostPopularItemMap = new HashMap<>();
+
+        for (String restaurantName : allRestaurantNames) {
+            addRestaurantsMostFrequentlyOrderedItem(restaurantToMostPopularItemMap, restaurantName);
+        }
+
+        return restaurantToMostPopularItemMap;
+
     }
 
     public String getMostPopularCategory(String restaurantName) {
+        RestaurantOrderReport report = getStoredRestaurantOrderReport(restaurantName);
+
+        if (StringUtils.isNotEmpty(report.getMostPopularCategory())){
+            return report.getMostPopularCategory();
+        }
+
+        Pair<String, Integer> categoryCountPair = calculateAndSaveMostPopularCategory(restaurantName, report);
+
+        return categoryCountPair.getKey();
+    }
+
+    public int getNumberOfOrders(String restaurantName) {
+        RestaurantOrderReport report = getStoredRestaurantOrderReport(restaurantName);
+
+        if (report.getOrderCount() > 0){
+            return report.getOrderCount();
+        }
+
+        return calculateAndSaveNumberOfOrders(restaurantName, report);
+    }
+
+    private Pair<String, Integer> calculateAndSaveMostPopularCategory(String restaurantName, RestaurantOrderReport report) {
+        Pair<String, Integer> categoryCountPair = calculateMostPopularCategory(restaurantName);
+
+        report.setMostPopularCategory(categoryCountPair.getKey());
+
+        saveReport(report);
+        return categoryCountPair;
+    }
+
+    private void addRestaurantsMostFrequentlyOrderedItem(Map<String, Integer> restaurantToMostPopularItemMap, String restaurantName) {
+        RestaurantOrderReport report = getStoredRestaurantOrderReport(restaurantName);
+
+        if (report.getMostFrequentlyOrderedItem() > 0){
+            restaurantToMostPopularItemMap.put(restaurantName, report.getMostFrequentlyOrderedItem());
+            return;
+        }
+
+        int mostFrequentlyOrderedItem = calculateMostFrequentlyOrderedItem(restaurantName);
+
+        report.setMostFrequentlyOrderedItem(mostFrequentlyOrderedItem);
+
+        saveReport(report);
+
+        restaurantToMostPopularItemMap.put(restaurantName, mostFrequentlyOrderedItem);
+    }
+
+    private int calculateMostFrequentlyOrderedItem(String restaurantName) {
+        List<Order> orders = restaurantDataService.getOrders(restaurantName);
+
+        Pair<RestaurantItemKey, Integer> itemCountPair = Pair.of(new RestaurantItemKey("", 0), 0);
+
+        Map<RestaurantItemKey, Integer> itemCounterMap = new HashMap<>();
+
+        for (Order order : orders) {
+            itemCountPair = updateItemToCounterMapAndGetCurrentMaxItem(restaurantName, itemCountPair, itemCounterMap, order);
+        }
+
+
+
+        return itemCountPair.getKey().getId();
+    }
+
+    private void saveReport(RestaurantOrderReport report) {
+        ofy().save().entity(report);
+    }
+
+    private RestaurantOrderReport getStoredRestaurantOrderReport(String restaurantName) {
+        Key<RestaurantOrderReport> restaurantOrderReportKey = Key.create(RestaurantOrderReport.class, restaurantName);
+
+        return getRestaurantOrderReport(restaurantOrderReportKey, restaurantName);
+    }
+
+    private BigDecimal calculateAndSaveTotalSalesAmount(String restaurantName, RestaurantOrderReport report) {
+        List<Order> orders = getOrders(restaurantName);
+        BigDecimal sales = BigDecimal.ZERO;
+        for (Order order : orders) {
+            sales = addOrderTotalToCumulativeTotal(sales, order);
+        }
+        report.setTotalSales(sales);
+        saveReport(report);
+        return sales;
+    }
+
+    private Pair<String, Integer> calculateMostPopularCategory(String restaurantName) {
         List<Order> orders = getOrders(restaurantName);
 
         Map<String, Integer> categoryCounterMap = new HashMap<>();
 
-        int maxCount = 0;
-        String mostPopCategory = "";
+        Pair<String, Integer> categoryCountPair = Pair.of("",0);
 
         for (Order order : orders) {
-            for (LineItem lineItem : order.getLineItems()) {
-                org.apache.commons.lang3.tuple.Pair<String, Integer> categoryToCount = incrementCategoryCount(restaurantName, categoryCounterMap, lineItem);
-                Integer newCount = categoryToCount.getValue();
-                if (maxCount < newCount){
-                    maxCount = newCount;
-                    mostPopCategory = categoryToCount.getKey();
-                }
-            }
+            categoryCountPair = updateCategoryToCounterMapAndGetCurrentMaxCategory(restaurantName, categoryCounterMap, categoryCountPair, order);
         }
-        return mostPopCategory;
+        return categoryCountPair;
     }
 
-    public int getNumberOfOrders(String restaurantName) {
-        return getOrders(restaurantName).size();
+    private int calculateAndSaveNumberOfOrders(String restaurantName, RestaurantOrderReport report) {
+        int numberOfOrders = getOrders(restaurantName).size();
+        report.setOrderCount(numberOfOrders);
+        saveReport(report);
+        return numberOfOrders;
+    }
+
+    private RestaurantOrderReport getRestaurantOrderReport(Key<RestaurantOrderReport> restaurantOrderReportKey, String name) {
+        return ofy().isLoaded(restaurantOrderReportKey)
+                ? ofy().load().key(restaurantOrderReportKey).now()
+                : new RestaurantOrderReport(name);
+    }
+
+    private Pair<RestaurantItemKey, Integer> updateItemToCounterMapAndGetCurrentMaxItem(String restaurantName, Pair<RestaurantItemKey, Integer> itemCountPair, Map<RestaurantItemKey, Integer> itemCounterMap, Order order) {
+        Pair<RestaurantItemKey, Integer> keyWithMaxCount = itemCountPair;
+        for (LineItem lineItem : order.getLineItems()) {
+            int id = lineItem.getId();
+            RestaurantItemKey item = new RestaurantItemKey(restaurantName, id);
+            keyWithMaxCount = updatedKeyToCountPair(itemCounterMap, itemCountPair, item);
+        }
+        return keyWithMaxCount;
+    }
+
+    private Pair<String, Integer> updateCategoryToCounterMapAndGetCurrentMaxCategory(String restaurantName, Map<String, Integer> categoryCounterMap, Pair<String, Integer> categoryCountPair, Order order) {
+        for (LineItem lineItem : order.getLineItems()) {
+            String category = getCategoryByRestaurantItem(restaurantName, lineItem);
+            categoryCountPair = updatedKeyToCountPair(categoryCounterMap, categoryCountPair, category);
+        }
+        return categoryCountPair;
+    }
+
+    private <K> Pair<K, Integer> updatedKeyToCountPair(Map<K, Integer> keyToCounterMap, Pair<K, Integer> countPair, K category) {
+        Integer newCount = getKeyCountPair(keyToCounterMap, category);
+        if (countPair.getValue() < newCount){
+            countPair = Pair.of(category, newCount);
+        }
+        return countPair;
+    }
+
+    private String getCategoryByRestaurantItem(String restaurantName, LineItem lineItem) {
+        return restaurantDataService.getCategoryByRestaurantItem(new RestaurantItemKey(restaurantName, lineItem.getId()));
     }
 
     private List<Order> getOrders(String restaurantName) {
         return restaurantDataService.getOrders(restaurantName);
     }
 
-    private org.apache.commons.lang3.tuple.Pair<String, Integer> incrementCategoryCount(String restaurantName, Map<String, Integer> categoryCounterMap, LineItem lineItem) {
-        int id = lineItem.getId();
-        String category = restaurantDataService.getCategoryByRestaurantItem(new RestaurantItemKey(restaurantName, id));
-        Integer count = categoryCounterMap.get(category);
+    private <K> Integer getKeyCountPair(Map<K, Integer> counterMap, K key) {
+        Integer count = counterMap.get(key);
         int newCount = count == null ? 1 : count + 1;
-        categoryCounterMap.put(category, newCount);
-        return org.apache.commons.lang3.tuple.Pair.of(category, newCount);
+        counterMap.put(key, newCount);
+        return newCount;
     }
 
-    private BigDecimal addToCumulativeTotal(BigDecimal sales, Order order) {
+    private BigDecimal addOrderTotalToCumulativeTotal(BigDecimal sales, Order order) {
         sales = sales.add(order.getTotalValue());
         return sales;
     }

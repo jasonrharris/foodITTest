@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
@@ -28,6 +29,7 @@ public class RestaurantDataServiceImplTest {
     public static final String BQGRILL_ORDER_1 = "{\"recVersion\":7,\"orderId\":5456722831343616,\"easyOrderNum\":1,\"created\":\"2014-03-23T19:06:37.459Z\",\"storeId\":\"bbqgrill\",\"storeName\":\"B-B-Q Grill\",\"totalValue\":9.50,\"lineItems\":[{\"id\":5,\"total\":\"7.50\",\"unitPrice\":\"7.50\",\"quantity\":1,\"promotion\":false,\"mealOptions\":[]},{\"id\":37,\"total\":\"2.00\",\"unitPrice\":\"2.00\",\"quantity\":1,\"promotion\":false,\"mealOptions\":[]}],\"status\":\"PaymentCaptured\",\"timeZoneId\":\"Europe/London\",\"collectionType\":\"Collection\",\"paymentType\":\"CREDIT_CARD\",\"addressDisplay\":\"1260 High Rd, London, N20 9HH\",\"contactNumber\":\"+442084467888\",\"domain\":\"www.bbqgrillwhetstone.co.uk\",\"currencyDisplay\":\"GBP\",\"commissionRate\":5,\"referenceNumber\":\"1\",\"receiptLogoUrl\":\"http://foodit-prod.appspot.com/api/v1/serveLogo/AMIfv94d6PQjKmDQU27RTz8vDRqEzeTwgsXXDKpNxfxcVJSGSI_8JFq_XHTbHV_ggLv2GFLFGXaAhekq0B2J0S9Vq3emJuJnB6KgQE2rUvaawdxjng6V5sDPg6brOktvZAsW22q23vuolFCOwsu54kIsAHDI7OpUmw/\"}";
     public static final String BBQ_GRILL_ORDER_2 = "{\"recVersion\":6,\"orderId\":5277395061833728,\"easyOrderNum\":1,\"created\":\"2014-03-24T21:15:06.696Z\",\"storeId\":\"bbqgrill\",\"storeName\":\"B-B-Q Grill\",\"totalValue\":7.30,\"lineItems\":[{\"id\":0,\"total\":\"7.30\",\"unitPrice\":\"7.30\",\"quantity\":1,\"promotion\":false,\"mealOptions\":[{\"name\":\"Size\",\"value\":\"Large\"},{\"name\":\"Drinks\",\"value\":\"Pepsi\"}]}],\"status\":\"CanceledByRestaurant\",\"timeZoneId\":\"Europe/London\",\"collectionType\":\"Collection\",\"paymentType\":\"CASH\",\"addressDisplay\":\"1260 High Rd, London, N20 9HH\",\"contactNumber\":\"+442084467888\",\"domain\":\"www.bbqgrillwhetstone.co.uk\",\"currencyDisplay\":\"GBP\",\"commissionRate\":5,\"referenceNumber\":\"1\",\"receiptLogoUrl\":\"http://foodit-prod.appspot.com/api/v1/serveLogo/AMIfv94d6PQjKmDQU27RTz8vDRqEzeTwgsXXDKpNxfxcVJSGSI_8JFq_XHTbHV_ggLv2GFLFGXaAhekq0B2J0S9Vq3emJuJnB6KgQE2rUvaawdxjng6V5sDPg6brOktvZAsW22q23vuolFCOwsu54kIsAHDI7OpUmw/\"}";
     public static final String BBQ_GRILL_ORDER_3 = "{\"recVersion\":6,\"orderId\":5278470951141376,\"easyOrderNum\":1,\"created\":\"2014-03-26T18:00:45.566Z\",\"storeId\":\"bbqgrill\",\"storeName\":\"B-B-Q Grill\",\"totalValue\":20.00,\"lineItems\":[{\"id\":1,\"total\":\"5.50\",\"unitPrice\":\"5.50\",\"quantity\":1,\"promotion\":false,\"mealOptions\":[{\"name\":\"Size\",\"value\":\"Large\"}]},{\"id\":6,\"total\":\"6.00\",\"unitPrice\":\"6.00\",\"quantity\":1,\"promotion\":false,\"mealOptions\":[]},{\"id\":20,\"total\":\"5.50\",\"unitPrice\":\"5.50\",\"quantity\":1,\"promotion\":false,\"mealOptions\":[]},{\"id\":30,\"total\":\"1.50\",\"unitPrice\":\"1.50\",\"quantity\":1,\"promotion\":false,\"mealOptions\":[]},{\"id\":36,\"total\":\"1.50\",\"unitPrice\":\"1.50\",\"quantity\":1,\"promotion\":false,\"mealOptions\":[]},{\"id\":46,\"total\":\"0.00\",\"unitPrice\":\"0.00\",\"quantity\":1,\"promotion\":true,\"mealOptions\":[{\"name\":\"Pick a Side\",\"value\":\"Taramonsalata\"}]}],\"status\":\"Collected\",\"timeZoneId\":\"Europe/London\",\"collectionType\":\"Collection\",\"paymentType\":\"CASH\",\"addressDisplay\":\"1260 High Rd, London, N20 9HH\",\"contactNumber\":\"+442084467888\",\"domain\":\"www.bbqgrillwhetstone.co.uk\",\"currencyDisplay\":\"GBP\",\"commissionRate\":5,\"referenceNumber\":\"1\",\"receiptLogoUrl\":\"http://foodit-prod.appspot.com/api/v1/serveLogo/AMIfv94d6PQjKmDQU27RTz8vDRqEzeTwgsXXDKpNxfxcVJSGSI_8JFq_XHTbHV_ggLv2GFLFGXaAhekq0B2J0S9Vq3emJuJnB6KgQE2rUvaawdxjng6V5sDPg6brOktvZAsW22q23vuolFCOwsu54kIsAHDI7OpUmw/\"}";
+
     @Rule
     public SetupAppengine setupAppengine = new SetupAppengine();
     @Rule
@@ -40,13 +42,18 @@ public class RestaurantDataServiceImplTest {
 
         ofy().save().entity(restaurantData).now();
 
-        service = new RestaurantDataServiceImpl();
+        service = new RestaurantDataServiceImpl(new KeyedRestaurantMenuDataImpl());
     }
 
     private String getOrdersJson() {
         return "[" + BQGRILL_ORDER_1 + "," +
                 BBQ_GRILL_ORDER_2 + "," +
                 BBQ_GRILL_ORDER_3 + "]";
+    }
+
+    @Test
+    public void shouldLoadData() {
+        service.loadData(Arrays.asList(BBQGRILL));
     }
 
     @Test

@@ -1,9 +1,6 @@
 package com.foodit.test.sample.service;
 
-import com.foodit.test.sample.entities.MainMenuItem;
-import com.foodit.test.sample.entities.Order;
-import com.foodit.test.sample.entities.RestaurantData;
-import com.foodit.test.sample.entities.RestaurantItemKey;
+import com.foodit.test.sample.entities.*;
 import com.google.appengine.api.datastore.Text;
 import com.google.appengine.labs.repackaged.com.google.common.collect.Lists;
 import com.google.common.base.Optional;
@@ -13,6 +10,7 @@ import com.google.gson.reflect.TypeToken;
 import com.googlecode.objectify.Key;
 import com.threewks.thundr.logger.Logger;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -29,7 +27,11 @@ public class RestaurantDataServiceImpl implements RestaurantDataService {
 
     private final List<String> restaurantNames = new Vector<>();
 
-    private final KeyedRestaurantMenuDataImpl keyedRestaurantMenuData = new KeyedRestaurantMenuDataImpl();
+    public RestaurantDataServiceImpl(KeyedRestaurantMenuData keyedRestaurantMenuData) {
+        this.keyedRestaurantMenuData = keyedRestaurantMenuData;
+    }
+
+    private final KeyedRestaurantMenuData keyedRestaurantMenuData;
 
     @Override
     public RestaurantData getRestaurantDataByName(String restaurantName) {
@@ -93,10 +95,13 @@ public class RestaurantDataServiceImpl implements RestaurantDataService {
     private List<MainMenuItem> getMenu(RestaurantData restaurantData) {
 
         Text menuJson = restaurantData.getMenuJson();
-        Gson gson = new Gson();
-        Type mainMenuListType = new TypeToken<List<MainMenuItem>>() {}.getType();
 
-        return gson.fromJson(menuJson.getValue(), mainMenuListType);
+        Gson gson = new Gson();
+
+        RestaurantAndMenu restaurantAndMenu = gson.fromJson(menuJson.getValue(), RestaurantAndMenu.class);
+
+        return restaurantAndMenu.getMainMenuItems();
+
     }
 
     private RestaurantData loadData(String restaurantName) {
@@ -116,6 +121,9 @@ public class RestaurantDataServiceImpl implements RestaurantDataService {
     }
 
     private Optional<RestaurantData> getLatestRestaurantData(String restaurantName) {
+        if (StringUtils.isEmpty(restaurantName)){
+            throw new RuntimeException("restaurant name cannot be empty");
+        }
         RestaurantData now = ofy().load().key(Key.create(RestaurantData.class, restaurantName)).now();
 
         return Optional.fromNullable(now);

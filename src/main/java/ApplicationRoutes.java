@@ -19,7 +19,10 @@ public class ApplicationRoutes {
         LOAD_DATA("load-data"),
         VIEW_INSTRUCTIONS("view-instructions"),
         VIEW_DATA("view-data"),
-        ORDER_COUNT("order-count");
+        ORDER_COUNT("order-count"),
+        SALES("sales"),
+        MOST_POPULAR_CATEGORY("most-pop-category"),
+        MOST_FREQUENT_ITEM("most-frequent-item");
 
         private String name;
 
@@ -45,5 +48,12 @@ public class ApplicationRoutes {
 
         //Data Enquiries
         routes.addRoute(new Route(GET, "/restaurant/{restaurant}/orders/count", RouteName.ORDER_COUNT.getName()), new MethodAction(OrderReportController.class, "orderCountReport"));
-	}
+
+        routes.addRoute(new Route(GET, "/restaurant/{restaurant}/sales", RouteName.SALES.getName()), new MethodAction(OrderReportController.class, "orderSalesReport"));
+
+        routes.addRoute(new Route(GET, "/restaurant/{restaurant}/mostPopularCategory", RouteName.MOST_POPULAR_CATEGORY.getName()), new MethodAction(OrderReportController.class, "mostPopularCategoryReport"));
+
+        routes.addRoute(new Route(GET, "/platform/mostFrequentItems", RouteName.MOST_FREQUENT_ITEM.getName()), new MethodAction(OrderReportController.class, "mostPopularItemByRestaurant"));
+
+    }
 }

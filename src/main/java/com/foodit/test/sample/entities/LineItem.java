@@ -22,6 +22,9 @@ public class LineItem {
         this.quantity = quantity;
     }
 
+    public LineItem() {
+    }
+
     public int getId() {
         return id;
     }

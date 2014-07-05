@@ -14,6 +14,16 @@ public class MainMenuItemOptions {
 
     private List<SideMenuItem> options;
 
+    public MainMenuItemOptions() {
+    }
+
+    public MainMenuItemOptions(String name, boolean multiSelect, boolean dropDown, List<SideMenuItem> options) {
+        this.name = name;
+        this.multiSelect = multiSelect;
+        this.dropDown = dropDown;
+        this.options = options;
+    }
+
     public String getName() {
         return name;
     }

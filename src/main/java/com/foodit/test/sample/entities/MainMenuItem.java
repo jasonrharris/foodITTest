@@ -23,6 +23,9 @@ public class MainMenuItem {
 
     private BigDecimal startingFromPrice;
 
+    public MainMenuItem() {
+    }
+
     public MainMenuItem(int id, String name, String description, String category, Map<String, BigDecimal> sizeAndPrice, List<MainMenuItemOptions> mealTypeOptions, BigDecimal startingFromPrice) {
         this.id = id;
         this.name = name;

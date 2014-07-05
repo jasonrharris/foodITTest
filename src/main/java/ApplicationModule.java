@@ -1,4 +1,8 @@
+import com.foodit.test.sample.calculator.OrderReporter;
 import com.foodit.test.sample.entities.RestaurantData;
+import com.foodit.test.sample.entities.RestaurantOrderReport;
+import com.foodit.test.sample.service.KeyedRestaurantMenuData;
+import com.foodit.test.sample.service.KeyedRestaurantMenuDataImpl;
 import com.foodit.test.sample.service.RestaurantDataService;
 import com.foodit.test.sample.service.RestaurantDataServiceImpl;
 import com.googlecode.objectify.ObjectifyService;
@@ -24,7 +28,10 @@ public class ApplicationModule extends BaseModule {
 		super.configure(injectionContext);
 		configureObjectify();
         injectionContext.inject(RestaurantDataServiceImpl.class).as(RestaurantDataService.class);
-	}
+        injectionContext.inject(OrderReporter.class).as(OrderReporter.class);
+        injectionContext.inject(KeyedRestaurantMenuDataImpl.class).as(KeyedRestaurantMenuData.class);
+
+    }
 
 	@Override
 	public void start(UpdatableInjectionContext injectionContext) {
@@ -34,6 +41,8 @@ public class ApplicationModule extends BaseModule {
 	}
 
 	private void configureObjectify() {
-		ObjectifyService.register(RestaurantData.class);
+
+        ObjectifyService.register(RestaurantData.class);
+        ObjectifyService.register(RestaurantOrderReport.class);
 	}
 }

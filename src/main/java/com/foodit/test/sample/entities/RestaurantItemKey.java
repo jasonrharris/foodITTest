@@ -12,6 +12,14 @@ public final class RestaurantItemKey {
         this.id = id;
     }
 
+    public String getStoreId() {
+        return storeId;
+    }
+
+    public int getId() {
+        return id;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

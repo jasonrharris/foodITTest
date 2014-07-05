@@ -12,29 +12,31 @@ import java.math.BigDecimal;
  */
 public class OrderReportController {
 
-
     private final OrderReporter orderReporter;
 
     public OrderReportController(OrderReporter orderReporter) {
         this.orderReporter = orderReporter;
     }
 
-    public JsonView orderCountReport(String restaurantName) throws IOException {
-        int size = orderReporter.getNumberOfOrders(restaurantName);
-
-        return new JsonView(size);
+    public JsonView orderCountReport(String restaurant) throws IOException {
+        return wrapInJsonView(orderReporter.getNumberOfOrders(restaurant));
     }
 
-    public JsonView orderSalesReport(String restaurantName) throws IOException {
-
-        BigDecimal sales = orderReporter.getTotalSalesAmount(restaurantName);
-
-        return new JsonView(sales);
-
+    public JsonView orderSalesReport(String restaurant) throws IOException {
+        return wrapInJsonView(orderReporter.getTotalSalesAmount(restaurant));
     }
 
-    public JsonView mostPopularCategoryReport(String restaurantName) throws IOException {
+    public JsonView mostPopularCategoryReport(String restaurant) throws IOException {
 
-        return new JsonView(orderReporter.getMostPopularCategory(restaurantName));
+        return wrapInJsonView(orderReporter.getMostPopularCategory(restaurant));
+    }
+
+    public JsonView mostPopularItemByRestaurant() throws IOException {
+
+        return wrapInJsonView(orderReporter.getMostFrequentlyOrderedItemPerRestaurant());
+    }
+
+    private JsonView wrapInJsonView(Object numberOfOrders) {
+        return new JsonView(numberOfOrders);
     }
 }
