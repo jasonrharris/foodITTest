@@ -2,7 +2,11 @@ package com.foodit.test.sample.service;
 
 import com.foodit.test.sample.entities.MainMenuItem;
 import com.foodit.test.sample.entities.MainMenuItemBuilder;
+import com.foodit.test.sample.entities.RestaurantItemAndCategory;
 import com.foodit.test.sample.entities.RestaurantItemKey;
+import com.threewks.thundr.gae.SetupAppengine;
+import com.threewks.thundr.gae.objectify.SetupObjectify;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.*;
@@ -10,6 +14,10 @@ import java.util.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 public class KeyedRestaurantMenuDataImplTest {
+    @Rule
+    public SetupAppengine setupAppengine = new SetupAppengine();
+    @Rule
+    public SetupObjectify setupObjectify = new SetupObjectify(RestaurantItemAndCategory.class);
 
     private final int id1 = 1;
     private final int id2 = 2;
@@ -42,7 +50,7 @@ public class KeyedRestaurantMenuDataImplTest {
 
     private void assertItemHasCorrectCategory(String restaurant, int itemId, String expectedCategory) {
         RestaurantItemKey key = new RestaurantItemKey(restaurant, itemId);
-        assertThat(keyedRestaurantMenuData.getCategoryByRestaurantItemKey(key), equalTo(expectedCategory));
+        assertThat(keyedRestaurantMenuData.getRestaurantItemDetails(key).getCategory(), equalTo(expectedCategory));
     }
 
     private List<MainMenuItem> getMainMenuItems() {

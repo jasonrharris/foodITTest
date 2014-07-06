@@ -2,6 +2,7 @@ package com.foodit.test.sample.service;
 
 import com.foodit.test.sample.entities.Order;
 import com.foodit.test.sample.entities.RestaurantData;
+import com.foodit.test.sample.entities.RestaurantItemAndCategory;
 import com.threewks.thundr.gae.SetupAppengine;
 import com.threewks.thundr.gae.objectify.SetupObjectify;
 import org.junit.Before;
@@ -33,7 +34,7 @@ public class RestaurantDataServiceImplTest {
     @Rule
     public SetupAppengine setupAppengine = new SetupAppengine();
     @Rule
-    public SetupObjectify setupObjectify = new SetupObjectify(RestaurantData.class);
+    public SetupObjectify setupObjectify = new SetupObjectify(RestaurantData.class, RestaurantItemAndCategory.class);
 
     private RestaurantDataServiceImpl service;
 

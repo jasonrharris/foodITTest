@@ -31,10 +31,10 @@ public class OrderReporter {
         return calculateAndSaveTotalSalesAmount(restaurantName, report);
     }
 
-    public Map<String, Integer> getMostFrequentlyOrderedItemPerRestaurant() {
+    public Map<String, String> getMostFrequentlyOrderedItemPerRestaurant() {
         List<String> allRestaurantNames = restaurantDataService.getAllRestaurantNames();
 
-        Map<String, Integer> restaurantToMostPopularItemMap = new HashMap<>();
+        Map<String, String> restaurantToMostPopularItemMap = new HashMap<>();
 
         for (String restaurantName : allRestaurantNames) {
             addRestaurantsMostFrequentlyOrderedItem(restaurantToMostPopularItemMap, restaurantName);
@@ -75,21 +75,22 @@ public class OrderReporter {
         return categoryCountPair;
     }
 
-    private void addRestaurantsMostFrequentlyOrderedItem(Map<String, Integer> restaurantToMostPopularItemMap, String restaurantName) {
+    private void addRestaurantsMostFrequentlyOrderedItem(Map<String, String> restaurantToMostPopularItemMap, String restaurantName) {
         RestaurantOrderReport report = getStoredRestaurantOrderReport(restaurantName);
 
-        if (report.getMostFrequentlyOrderedItem() > 0){
+        if (StringUtils.isNotEmpty(report.getMostFrequentlyOrderedItem())){
             restaurantToMostPopularItemMap.put(restaurantName, report.getMostFrequentlyOrderedItem());
             return;
         }
 
-        int mostFrequentlyOrderedItem = calculateMostFrequentlyOrderedItem(restaurantName);
+        int mostFrequentlyOrderedItemId = calculateMostFrequentlyOrderedItem(restaurantName);
 
-        report.setMostFrequentlyOrderedItem(mostFrequentlyOrderedItem);
+        String mostFreqOrderedItemName = restaurantDataService.getNameOfItem(restaurantName, mostFrequentlyOrderedItemId);
+        report.setMostFrequentlyOrderedItem(mostFreqOrderedItemName);
 
         saveReport(report);
 
-        restaurantToMostPopularItemMap.put(restaurantName, mostFrequentlyOrderedItem);
+        restaurantToMostPopularItemMap.put(restaurantName, mostFreqOrderedItemName);
     }
 
     private int calculateMostFrequentlyOrderedItem(String restaurantName) {
@@ -103,13 +104,11 @@ public class OrderReporter {
             itemCountPair = updateItemToCounterMapAndGetCurrentMaxItem(restaurantName, itemCountPair, itemCounterMap, order);
         }
 
-
-
         return itemCountPair.getKey().getId();
     }
 
     private void saveReport(RestaurantOrderReport report) {
-        ofy().save().entity(report);
+        ofy().save().entity(report).now();
     }
 
     private RestaurantOrderReport getStoredRestaurantOrderReport(String restaurantName) {
@@ -155,12 +154,16 @@ public class OrderReporter {
                 : new RestaurantOrderReport(name);
     }
 
-    private Pair<RestaurantItemKey, Integer> updateItemToCounterMapAndGetCurrentMaxItem(String restaurantName, Pair<RestaurantItemKey, Integer> itemCountPair, Map<RestaurantItemKey, Integer> itemCounterMap, Order order) {
-        Pair<RestaurantItemKey, Integer> keyWithMaxCount = itemCountPair;
+    private Pair<RestaurantItemKey, Integer> updateItemToCounterMapAndGetCurrentMaxItem(
+            String restaurantName,
+            Pair<RestaurantItemKey, Integer> currentMaxCountPair,
+            Map<RestaurantItemKey, Integer> itemCounterMap,
+            Order order) {
+        Pair<RestaurantItemKey, Integer> keyWithMaxCount = currentMaxCountPair;
         for (LineItem lineItem : order.getLineItems()) {
             int id = lineItem.getId();
             RestaurantItemKey item = new RestaurantItemKey(restaurantName, id);
-            keyWithMaxCount = updatedKeyToCountPair(itemCounterMap, itemCountPair, item);
+            keyWithMaxCount = updatedKeyToCountPair(itemCounterMap, currentMaxCountPair, item, lineItem.getQuantity());
         }
         return keyWithMaxCount;
     }
@@ -168,15 +171,15 @@ public class OrderReporter {
     private Pair<String, Integer> updateCategoryToCounterMapAndGetCurrentMaxCategory(String restaurantName, Map<String, Integer> categoryCounterMap, Pair<String, Integer> categoryCountPair, Order order) {
         for (LineItem lineItem : order.getLineItems()) {
             String category = getCategoryByRestaurantItem(restaurantName, lineItem);
-            categoryCountPair = updatedKeyToCountPair(categoryCounterMap, categoryCountPair, category);
+            categoryCountPair = updatedKeyToCountPair(categoryCounterMap, categoryCountPair, category, lineItem.getQuantity());
         }
         return categoryCountPair;
     }
 
-    private <K> Pair<K, Integer> updatedKeyToCountPair(Map<K, Integer> keyToCounterMap, Pair<K, Integer> countPair, K category) {
-        Integer newCount = getKeyCountPair(keyToCounterMap, category);
+    private <K> Pair<K, Integer> updatedKeyToCountPair(Map<K, Integer> keyToCounterMap, Pair<K, Integer> countPair, K key, int quantity) {
+        Integer newCount = getKeyCountPair(keyToCounterMap, key, quantity);
         if (countPair.getValue() < newCount){
-            countPair = Pair.of(category, newCount);
+            countPair = Pair.of(key, newCount);
         }
         return countPair;
     }
@@ -189,9 +192,9 @@ public class OrderReporter {
         return restaurantDataService.getOrders(restaurantName);
     }
 
-    private <K> Integer getKeyCountPair(Map<K, Integer> counterMap, K key) {
+    private <K> Integer getKeyCountPair(Map<K, Integer> counterMap, K key, int quantity) {
         Integer count = counterMap.get(key);
-        int newCount = count == null ? 1 : count + 1;
+        int newCount = count == null ? quantity : count + quantity;
         counterMap.put(key, newCount);
         return newCount;
     }

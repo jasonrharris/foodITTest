@@ -57,11 +57,11 @@ public class OrderReportControllerTest {
 
     @Test
     public void shouldReturnMostFrequentlyOrderedItemsPerRestaurant() throws IOException {
-        Map<String, Integer> expectedMap = new HashMap<>();
-        expectedMap.put(REST_ID, 6);
-        expectedMap.put("rest2", 4);
+        Map<String, String> expectedMap = new HashMap<>();
+        expectedMap.put(REST_ID, "6");
+        expectedMap.put("rest2", "4");
         when(orderReporter.getMostFrequentlyOrderedItemPerRestaurant()).thenReturn(expectedMap);
-        assertThat((Map<String, Integer>) controller.mostPopularItemByRestaurant().getOutput(), equalTo(expectedMap));
+        assertThat((Map<String, String>) controller.mostPopularItemByRestaurant().getOutput(), equalTo(expectedMap));
     }
 
 

@@ -23,7 +23,7 @@ public class RestaurantOrderReport {
 
     private String mostPopularCategory;
 
-    private int mostFrequentlyOrderedItem;
+    private String mostFrequentlyOrderedItem;
 
     public RestaurantOrderReport() {
     }
@@ -49,7 +49,7 @@ public class RestaurantOrderReport {
         return mostPopularCategory;
     }
 
-    public int getMostFrequentlyOrderedItem() {
+    public String getMostFrequentlyOrderedItem() {
         return mostFrequentlyOrderedItem;
     }
 
@@ -69,7 +69,7 @@ public class RestaurantOrderReport {
         this.mostPopularCategory = mostPopularCategory;
     }
 
-    public void setMostFrequentlyOrderedItem(int mostFrequentlyOrderedItem) {
+    public void setMostFrequentlyOrderedItem(String mostFrequentlyOrderedItem) {
         this.mostFrequentlyOrderedItem = mostFrequentlyOrderedItem;
     }
 }

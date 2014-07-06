@@ -8,10 +8,10 @@ import com.googlecode.objectify.annotation.Id;
 public class RestaurantData {
 
 	@Id
-	String restaurant;
+	private String restaurant;
 
-	Text menuJson;
-	Text ordersJson;
+	private Text menuJson;
+	private Text ordersJson;
 
 	public RestaurantData(String restaurant, String menuJson, String ordersJson) {
 		super();

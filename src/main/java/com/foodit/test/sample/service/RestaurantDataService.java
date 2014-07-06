@@ -21,4 +21,6 @@ public interface RestaurantDataService {
     String getCategoryByRestaurantItem(RestaurantItemKey restaurantItemKey);
 
     List<String> getAllRestaurantNames();
+
+    String getNameOfItem(String restaurantName, int itemId);
 }

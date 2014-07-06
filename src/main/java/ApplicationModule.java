@@ -1,5 +1,6 @@
 import com.foodit.test.sample.calculator.OrderReporter;
 import com.foodit.test.sample.entities.RestaurantData;
+import com.foodit.test.sample.entities.RestaurantItemAndCategory;
 import com.foodit.test.sample.entities.RestaurantOrderReport;
 import com.foodit.test.sample.service.KeyedRestaurantMenuData;
 import com.foodit.test.sample.service.KeyedRestaurantMenuDataImpl;
@@ -44,5 +45,6 @@ public class ApplicationModule extends BaseModule {
 
         ObjectifyService.register(RestaurantData.class);
         ObjectifyService.register(RestaurantOrderReport.class);
+        ObjectifyService.register(RestaurantItemAndCategory.class);
 	}
 }

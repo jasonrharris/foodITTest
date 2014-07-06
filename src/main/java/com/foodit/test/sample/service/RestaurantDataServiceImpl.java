@@ -7,7 +7,6 @@ import com.google.common.base.Optional;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.googlecode.objectify.Key;
 import com.threewks.thundr.logger.Logger;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -41,11 +40,14 @@ public class RestaurantDataServiceImpl implements RestaurantDataService {
 
     @Override
     public void loadData(List<String> allRestaurantNames) {
+        restaurantNames.clear();
+        ofy().clear();
+
         List<RestaurantData> allRestaurantData = Lists.newArrayList();
 
         Map<String, List<MainMenuItem>> restaurantToMainItemsMap = new HashMap<>();
 
-        restaurantNames.clear();
+
         for (String restaurant : allRestaurantNames) {
             RestaurantData restaurantData = loadData(restaurant);
 
@@ -55,6 +57,7 @@ public class RestaurantDataServiceImpl implements RestaurantDataService {
 
             restaurantNames.add(restaurant);
         }
+
         keyedRestaurantMenuData.initialise(restaurantToMainItemsMap);
 
         ofy().save().entities(allRestaurantData);
@@ -84,12 +87,17 @@ public class RestaurantDataServiceImpl implements RestaurantDataService {
 
     @Override
     public String getCategoryByRestaurantItem(RestaurantItemKey restaurantItemKey) {
-        return keyedRestaurantMenuData.getCategoryByRestaurantItemKey(restaurantItemKey);
+        return keyedRestaurantMenuData.getRestaurantItemDetails(restaurantItemKey).getCategory();
     }
 
     @Override
     public List<String> getAllRestaurantNames() {
         return restaurantNames;
+    }
+
+    @Override
+    public String getNameOfItem(String restaurantName, int itemId) {
+        return keyedRestaurantMenuData.getRestaurantItemDetails(new RestaurantItemKey(restaurantName, itemId)).getName();
     }
 
     private List<MainMenuItem> getMenu(RestaurantData restaurantData) {
@@ -124,9 +132,9 @@ public class RestaurantDataServiceImpl implements RestaurantDataService {
         if (StringUtils.isEmpty(restaurantName)){
             throw new RuntimeException("restaurant name cannot be empty");
         }
-        RestaurantData now = ofy().load().key(Key.create(RestaurantData.class, restaurantName)).now();
+        RestaurantData restaurantData = ofy().load().type(RestaurantData.class).id(restaurantName).now();
 
-        return Optional.fromNullable(now);
+        return Optional.fromNullable(restaurantData);
     }
 
 

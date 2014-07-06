@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.mockito.verification.VerificationMode;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -27,8 +26,9 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OrderReporterTest {
-    private final int otherItem1 = 4;
+    private final int otherItem1WithExtraQuantity = 4;
     private final int otherItem2 = 2;
+    private final String otherCatWithExtraQuantity = "categpry1";
     @Mock
     private RestaurantDataService restaurantDataService;
 
@@ -39,6 +39,7 @@ public class OrderReporterTest {
     public SetupAppengine setupAppengine = new SetupAppengine();
     @Rule
     public SetupObjectify setupObjectify = new SetupObjectify(RestaurantOrderReport.class);
+    private String expectedMostFrequentItem = "mostFreq";
 
     @Before
     public void setup() {
@@ -54,10 +55,10 @@ public class OrderReporterTest {
 
         assertThat(orderReporter.getNumberOfOrders(restId), equalTo(2));
 
-        //ensure 2nd request returns s
+        //ensure 2nd request returns same
         assertThat(orderReporter.getNumberOfOrders(restId), equalTo(2));
 
-        //verify(restaurantDataService, times(1)).getOrders(restId);
+        verify(restaurantDataService, times(1)).getOrders(restId);
 
     }
 
@@ -84,6 +85,10 @@ public class OrderReporterTest {
 
         assertThat(totalValue1.add(totalValue2).add(totalValue3).compareTo(totalSalesAmount), equalTo(0));
 
+        orderReporter.getTotalSalesAmount(restaurantName);
+
+        verify(restaurantDataService, times(1)).getOrders(restaurantName);
+
     }
 
     @Test
@@ -92,12 +97,10 @@ public class OrderReporterTest {
         String rest1 = "rest1";
         String rest2 = "rest2";
 
-        Order rest1Order = getCategorisedOrder(rest1);
-
-        Order rest2Order = getCategorisedOrder(rest2);
+        int quantity = 1;
+        Order rest1Order = getCategorisedOrder(rest1, quantity);
 
         when(restaurantDataService.getOrders(rest1)).thenReturn(Arrays.asList(rest1Order));
-        when(restaurantDataService.getOrders(rest2)).thenReturn(Arrays.asList(rest2Order));
 
         String mostPopularCat = "mostPopularCat";
 
@@ -105,6 +108,34 @@ public class OrderReporterTest {
         mockRestaurantCategoryLookup(rest2, mostPopularCat);
 
         assertThat(orderReporter.getMostPopularCategory(rest1), equalTo(mostPopularCat));
+
+        orderReporter.getMostPopularCategory(rest1);
+
+        verify(restaurantDataService, times(1)).getOrders(rest1);
+
+    }
+
+    @Test
+    public void shouldCorrectlyDetermineMostPopularCategoryBasedOnBiggerQuantity(){
+
+        String rest1 = "rest1";
+        String rest2 = "rest2";
+
+        int quantity = 10;
+        Order rest1Order = getCategorisedOrder(rest1, quantity);
+
+        when(restaurantDataService.getOrders(rest1)).thenReturn(Arrays.asList(rest1Order));
+
+        String mostPopularCat = "mostPopularCat";
+
+        mockRestaurantCategoryLookup(rest1, mostPopularCat);
+        mockRestaurantCategoryLookup(rest2, mostPopularCat);
+
+        assertThat(orderReporter.getMostPopularCategory(rest1), equalTo(otherCatWithExtraQuantity));
+
+        orderReporter.getMostPopularCategory(rest1);
+
+        verify(restaurantDataService, times(1)).getOrders(rest1);
 
     }
 
@@ -115,48 +146,63 @@ public class OrderReporterTest {
 
         LocalDateTime now = LocalDateTime.now();
 
-        Order rest1Order1 = getTimedOrder(rest1, now.plusMinutes(1), 1);
-        Order rest1Order2 = getTimedOrder(rest1, now.plusMinutes(2), 2);
+        Order rest1Order1 = getTimedOrder(rest1, now.plusMinutes(1), 1, 1);
+        Order rest1Order2 = getTimedOrder(rest1, now.plusMinutes(2), 2, 1);
 
-        Order rest2Order1 = getTimedOrder(rest2, now.plusMinutes(3), 1);
-        Order rest2Order2 = getTimedOrder(rest2, now.plusMinutes(4), 2);
+        Order rest2Order1 = getTimedOrder(rest2, now.plusMinutes(3), 1, 1);
+        Order rest2Order2 = getTimedOrder(rest2, now.plusMinutes(4), 2, 1);
 
         when(restaurantDataService.getAllRestaurantNames()).thenReturn(Arrays.asList(rest1, rest2));
         when(restaurantDataService.getOrders(rest1)).thenReturn(Arrays.asList(rest1Order1, rest1Order2));
         when(restaurantDataService.getOrders(rest2)).thenReturn(Arrays.asList(rest2Order1, rest2Order2));
 
-        Map<String, Integer> mostPopularItemPerRestaurant = orderReporter.getMostFrequentlyOrderedItemPerRestaurant();
+        mockItemNameLookup(rest1);
 
-        assertThat(mostPopularItemPerRestaurant.get(rest1), equalTo(expectedMostPopularCategoryItem));
-        assertThat(mostPopularItemPerRestaurant.get(rest2), equalTo(expectedMostPopularCategoryItem));
+        mockItemNameLookup(rest2);
 
+        Map<String,String> mostPopularItemPerRestaurant = orderReporter.getMostFrequentlyOrderedItemPerRestaurant();
+
+        assertThat(mostPopularItemPerRestaurant.get(rest1), equalTo(expectedMostFrequentItem));
+        assertThat(mostPopularItemPerRestaurant.get(rest2), equalTo(expectedMostFrequentItem));
+
+        orderReporter.getMostFrequentlyOrderedItemPerRestaurant();
+
+        verify(restaurantDataService, times(1)).getOrders(rest1);
+        verify(restaurantDataService, times(1)).getOrders(rest2);
 
     }
 
     private void mockRestaurantCategoryLookup(String rest, String mostPopularCat) {
-        when(restaurantDataService.getCategoryByRestaurantItem(new RestaurantItemKey(rest, otherItem1))).thenReturn("categpry1");
+        when(restaurantDataService.getCategoryByRestaurantItem(new RestaurantItemKey(rest, otherItem1WithExtraQuantity))).thenReturn(otherCatWithExtraQuantity);
         when(restaurantDataService.getCategoryByRestaurantItem(new RestaurantItemKey(rest, otherItem2))).thenReturn("category2");
         when(restaurantDataService.getCategoryByRestaurantItem(new RestaurantItemKey(rest, expectedMostPopularCategoryItem))).thenReturn(mostPopularCat);
     }
 
-    private Order getCategorisedOrder(String rest1) {
+    private void mockItemNameLookup(String rest) {
+        when(restaurantDataService.getNameOfItem(rest, otherItem1WithExtraQuantity)).thenReturn("aName");
+        when(restaurantDataService.getNameOfItem(rest, otherItem2)).thenReturn("anotherName");
+        when(restaurantDataService.getNameOfItem(rest, expectedMostPopularCategoryItem)).thenReturn(expectedMostFrequentItem);
+    }
+
+
+    private Order getCategorisedOrder(String rest1, int quantity) {
         OrderBuilder orderBuilder = new OrderBuilder();
-        List<LineItem> rest1LineItems = getLineItems();
+        List<LineItem> rest1LineItems = getLineItems(quantity);
 
         return orderBuilder.setStoreId(rest1).setOrderId(1).setLineItems(rest1LineItems).createOrder();
     }
 
-    private Order getTimedOrder(String rest1, LocalDateTime orderTime, int orderId) {
+    private Order getTimedOrder(String rest1, LocalDateTime orderTime, int orderId, int quantity) {
         OrderBuilder orderBuilder = new OrderBuilder();
-        List<LineItem> rest1LineItems = getLineItems();
+        List<LineItem> rest1LineItems = getLineItems(quantity);
 
         return orderBuilder.setStoreId(rest1).setOrderId(orderId).setCreated(orderTime.toString()).setLineItems(rest1LineItems).createOrder();
     }
 
-    private List<LineItem> getLineItems() {
+    private List<LineItem> getLineItems(int quantity) {
         LineItemBuilder lineItemBuilder = new LineItemBuilder();
         return Arrays.asList(
-                lineItemBuilder.setQuantity(1).setId(otherItem1).createLineItem(),
+                lineItemBuilder.setQuantity(1).setId(otherItem1WithExtraQuantity).setQuantity(quantity).createLineItem(),
                 lineItemBuilder.setQuantity(1).setId(otherItem2).createLineItem(),
                 lineItemBuilder.setQuantity(1).setId(expectedMostPopularCategoryItem).createLineItem(),
                 lineItemBuilder.setQuantity(1).setId(expectedMostPopularCategoryItem).createLineItem());
